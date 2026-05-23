@@ -1,5 +1,11 @@
 name: Build and Deploy LaTeX PDF
+
 on: [push]
+
+# CRITICAL: Grants the runner permission to push the compiled assets back to your repository
+permissions:
+  contents: write
+
 jobs:
   build_latex:
     runs-on: ubuntu-latest
@@ -10,14 +16,25 @@ jobs:
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: main.tex # Change this if your main file has a different name
+          # ⚠️ CHANGE THIS if your main LaTeX file is named something else (e.g., guidance.tex)
+          root_file: main.tex 
+
+      - name: Prepare PDF and Redirect for Deployment
+        run: |
+          # 1. Create a clean folder to isolate deployment files
+          mkdir -p public
+          
+          # 2. Copy and rename your PDF to a clean name
+          # (You can change 'TITANS_Guidance.pdf' to whatever file name you want)
+          cp main.pdf public/TITANS_Guidance.pdf
+          
+          # 3. Create an index file that auto-redirects 'docs.prepfusion.in' straight to the PDF
+          echo '<meta http-equiv="refresh" content="0; url=TITANS_Guidance.pdf">' > public/index.html
 
       - name: Upload PDF to GitHub Pages Branch
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
+          publish_dir: ./public
           publish_branch: gh-pages
           allow_empty_commit: true
-          keep_files: false
-          destination_dir: .
